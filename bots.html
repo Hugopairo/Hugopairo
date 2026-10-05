@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mata Bots</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+         justify-content: center; background: #111; color: #eee; font-family: sans-serif; }
+  canvas { background: #1c1c28; border: 3px solid #4cc9f0; border-radius: 6px; cursor: crosshair; max-width: 100%; }
+  p { color: #aaa; font-size: 14px; }
+</style>
+</head>
+<body>
+  <canvas id="game" width="800" height="500"></canvas>
+  <p>WASD / flechas: mover · Ratón: apuntar · Clic: disparar · Espacio: reiniciar</p>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+let player, bullets, bots, particles, score, best = 0, wave, over, spawnTimer, last;
+const keys = {};
+const mouse = {x: W / 2, y: H / 2, down: false};
+
+function start() {
+  player = {x: W / 2, y: H / 2, r: 14, hp: 100, cooldown: 0, speed: 220};
+  bullets = []; bots = []; particles = [];
+  score = 0; wave = 1; over = false; spawnTimer = 0;
+  last = performance.now();
+}
+
+function spawnBot() {
+  // aparece en un borde aleatorio
+  const side = Math.floor(Math.random() * 4);
+  const x = side === 0 ? -20 : side === 1 ? W + 20 : Math.random() * W;
+  const y = side === 2 ? -20 : side === 3 ? H + 20 : Math.random() * H;
+  const big = Math.random() < 0.15 + wave * 0.02;
+  bots.push({
+    x, y,
+    r: big ? 22 : 13,
+    hp: big ? 4 : 1,
+    speed: (big ? 50 : 75) + wave * 6 + Math.random() * 20,
+    color: big ? '#ff6b35' : '#e63946',
+  });
+}
+
+function burst(x, y, color, n) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = 50 + Math.random() * 200;
+    particles.push({x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.5, color});
+  }
+}
+
+function update(dt) {
+  if (over) return;
+
+  // movimiento del jugador
+  let dx = (keys.d || keys.ArrowRight ? 1 : 0) - (keys.a || keys.ArrowLeft ? 1 : 0);
+  let dy = (keys.s || keys.ArrowDown ? 1 : 0) - (keys.w || keys.ArrowUp ? 1 : 0);
+  const len = Math.hypot(dx, dy) || 1;
+  player.x = Math.min(W - player.r, Math.max(player.r, player.x + dx / len * player.speed * dt));
+  player.y = Math.min(H - player.r, Math.max(player.r, player.y + dy / len * player.speed * dt));
+
+  // disparo
+  player.cooldown -= dt;
+  if (mouse.down && player.cooldown <= 0) {
+    const a = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+    bullets.push({x: player.x, y: player.y, vx: Math.cos(a) * 600, vy: Math.sin(a) * 600});
+    player.cooldown = 0.15;
+  }
+
+  bullets.forEach(b => { b.x += b.vx * dt; b.y += b.vy * dt; });
+  bullets = bullets.filter(b => b.x > 0 && b.x < W && b.y > 0 && b.y < H);
+
+  // aparición de bots
+  spawnTimer -= dt;
+  if (spawnTimer <= 0) {
+    spawnBot();
+    spawnTimer = Math.max(0.25, 1.2 - wave * 0.08);
+  }
+
+  // bots persiguen al jugador
+  for (const bot of bots) {
+    const a = Math.atan2(player.y - bot.y, player.x - bot.x);
+    bot.x += Math.cos(a) * bot.speed * dt;
+    bot.y += Math.sin(a) * bot.speed * dt;
+
+    if (Math.hypot(bot.x - player.x, bot.y - player.y) < bot.r + player.r) {
+      player.hp -= 25 * dt * (bot.r > 15 ? 1.6 : 1);
+      if (player.hp <= 0) { over = true; best = Math.max(best, score); }
+    }
+  }
+
+  // balas contra bots
+  for (const b of bullets) {
+    for (const bot of bots) {
+      if (bot.hp > 0 && Math.hypot(b.x - bot.x, b.y - bot.y) < bot.r) {
+        bot.hp--; b.dead = true;
+        burst(b.x, b.y, '#ffd166', 4);
+        if (bot.hp <= 0) {
+          score += bot.r > 15 ? 30 : 10;
+          burst(bot.x, bot.y, bot.color, 14);
+          wave = 1 + Math.floor(score / 150);
+        }
+        break;
+      }
+    }
+  }
+  bullets = bullets.filter(b => !b.dead);
+  bots = bots.filter(b => b.hp > 0);
+
+  particles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; });
+  particles = particles.filter(p => p.life > 0);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  particles.forEach(p => {
+    ctx.globalAlpha = Math.max(0, p.life * 2);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+  });
+  ctx.globalAlpha = 1;
+
+  // bots (cuadrados con "ojos")
+  for (const bot of bots) {
+    ctx.fillStyle = bot.color;
+    ctx.fillRect(bot.x - bot.r, bot.y - bot.r, bot.r * 2, bot.r * 2);
+    ctx.fillStyle = '#fff';
+    const e = bot.r * 0.3;
+    ctx.fillRect(bot.x - e - 3, bot.y - e, 6, 6);
+    ctx.fillRect(bot.x + e - 3, bot.y - e, 6, 6);
+  }
+
+  ctx.fillStyle = '#ffd166';
+  bullets.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, Math.PI * 2); ctx.fill(); });
+
+  // jugador y cañón
+  const a = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+  ctx.strokeStyle = '#4cc9f0'; ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(player.x, player.y);
+  ctx.lineTo(player.x + Math.cos(a) * 24, player.y + Math.sin(a) * 24);
+  ctx.stroke();
+  ctx.fillStyle = '#4cc9f0';
+  ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2); ctx.fill();
+
+  // HUD
+  ctx.fillStyle = '#333'; ctx.fillRect(10, 10, 150, 14);
+  ctx.fillStyle = player.hp > 30 ? '#2ecc71' : '#e63946';
+  ctx.fillRect(10, 10, Math.max(0, player.hp) * 1.5, 14);
+  ctx.fillStyle = '#fff'; ctx.font = '16px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(`Puntos: ${score}   Oleada: ${wave}   Récord: ${best}`, 10, 45);
+
+  if (over) {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+    ctx.font = 'bold 44px sans-serif';
+    ctx.fillText('Game Over', W / 2, H / 2 - 10);
+    ctx.font = '18px sans-serif';
+    ctx.fillText(`Bots eliminados: ${score} puntos · Espacio para reiniciar`, W / 2, H / 2 + 28);
+  }
+}
+
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); start(); return; }
+  keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] = true;
+  if (e.key.startsWith('Arrow')) e.preventDefault();
+});
+document.addEventListener('keyup', e => {
+  keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] = false;
+});
+function setMouse(e) {
+  const r = canvas.getBoundingClientRect();
+  mouse.x = (e.clientX - r.left) * W / r.width;
+  mouse.y = (e.clientY - r.top) * H / r.height;
+}
+canvas.addEventListener('mousemove', setMouse);
+canvas.addEventListener('mousedown', e => { setMouse(e); mouse.down = true; });
+document.addEventListener('mouseup', () => mouse.down = false);
+
+start();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
