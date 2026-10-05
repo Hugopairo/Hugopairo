@@ -160,6 +160,7 @@ SCREENS.psetup = () => {
   const styles = Object.entries(STYLES).map(([k, v]) => `<div class="choice ${s.style === k ? 'on' : ''}" data-a="pset" data-k="style" data-v="${k}"><b>${v.n}</b><div class="small muted">${v.d}</div></div>`).join('');
   const diffs = [['facil', 'Promesa mundial', 'Potencial muy alto'], ['normal', 'Talento', 'Potencial alto'], ['dificil', 'Guerrero', 'Potencial normal: ¡tendrás que sudarlo!']].map(([k, a, b]) => `<div class="choice ${s.diff === k ? 'on' : ''}" data-a="pset" data-k="diff" data-v="${k}"><b>${a}</b><div class="small muted">${b}</div></div>`).join('');
   return `<div class="main" style="max-width:900px;margin:0 auto;padding:20px 16px 60px"><div class="row mb"><button class="btn" data-a="totitle">← Volver</button><h2>Modo Jugador · crea tu estrella</h2></div>
+  <div class="panel mb row wrap"><div class="grow"><b>⭐ Jugar como Hugo Gallego</b><div class="small muted">Central rápido y fuerte, dorsal 14, EFB Jesús de la Ossa (Primera Autonómica)</div></div><button class="btn pri" data-a="hugo">Empezar como Hugo ▶</button></div>
   <div class="panel col"><div class="grid g3"><label class="f">Nombre completo<input id="pname" value="${esc(s.name)}" placeholder="Ej: Hugo Pairo" maxlength="26"></label><label class="f">Nacionalidad<select id="pnat">${natOpts}</select></label><label class="f">Posición<select id="ppos">${posOpts}</select></label></div>
   <div><h3 class="mb">Estilo de juego</h3><div class="grid g4">${styles}</div></div><div><h3 class="mb">Dificultad (potencial oculto)</h3><div class="grid g3">${diffs}</div></div>
   <button class="btn pri lg" data-a="pnext">Elegir primer club ▶</button></div></div>`;
@@ -182,6 +183,7 @@ SCREENS.pclub = () => {
   <div class="panel mb hero">${fcard(p)}<div class="grow"><h2>${esc(p.name)}</h2><p class="muted">${NATS[p.nat].f} ${NATS[p.nat].n} · ${p.age} años · ${POS_NAME[p.pos]}</p><div class="kpi"><div class="statbox"><div class="muted small">Nivel</div><div class="v">${p.ovr}</div></div><div class="statbox"><div class="muted small">Potencial estimado</div><div class="v">${pot - 3}-${pot + 3}</div></div><div class="statbox"><div class="muted small">Valor</div><div class="v">${eur(p.value)}</div></div></div></div></div>
   <h3 class="mb">Tres clubes quieren ficharte</h3><div class="col">${cards}</div></div>`;
 };
+ACT.hugo = () => { startAsHugo(); go('home'); };
 ACT.backp = () => go('psetup');
 ACT.pickp = d => { startAt(+d.id); G.pbias = playerBias(); go('home'); };
 
@@ -358,7 +360,7 @@ function showPlayer(id) {
   const showPot = p.age <= 30 || own;
   const d = (a, b) => `<div class="row between small" style="padding:3px 0;border-bottom:1px solid #1a2447"><span class="muted">${a}</span><span>${b}</span></div>`;
   const delta = p.o0 != null && p.o0 !== p.ovr ? ` <span class="${p.ovr > p.o0 ? 'pos' : 'neg'} small">${p.ovr > p.o0 ? '▲' : '▼'}${Math.abs(p.ovr - p.o0)}</span>` : '';
-  modal(`<div class="hero">${fcard(p)}<div class="grow" style="min-width:230px"><h2>${esc(p.name)}</h2><div class="muted">${NATS[p.nat].f} ${NATS[p.nat].n} · ${p.age} años · ${POS_NAME[p.pos]} ${p.youth ? '· <span class="tag g">Cantera</span>' : ''}</div><div class="row wrap gap8 mt">${t ? `<span class="pill">${crest(t, 14)} ${esc(t.name)}</span>` : '<span class="pill">Agente libre</span>'}${statusTag(p)}${p.listed ? '<span class="tag y">En venta</span>' : ''}${p.loan ? '<span class="tag b">Cedido</span>' : ''}</div>
+  modal(`<div class="hero">${fcard(p)}<div class="grow" style="min-width:230px"><h2>${esc(p.name)}</h2><div class="muted">${NATS[p.nat].f} ${NATS[p.nat].n} · ${p.age} años${p.height ? ' · ' + p.height + ' cm' : ''} · ${POS_NAME[p.pos]} ${p.youth ? '· <span class="tag g">Cantera</span>' : ''}</div><div class="row wrap gap8 mt">${t ? `<span class="pill">${crest(t, 14)} ${esc(t.name)}</span>` : '<span class="pill">Agente libre</span>'}${statusTag(p)}${p.listed ? '<span class="tag y">En venta</span>' : ''}${p.loan ? '<span class="tag b">Cedido</span>' : ''}</div>
   <div class="mt">${d('Nivel / Potencial', `${p.ovr}${delta} / ${showPot ? potTxt : '—'}`)}${d('Valor de mercado', eur(p.value))}${d('Salario', fmtK(p.wage) + '/sem')}${d('Contrato', p.contract + ' temp.')}${d('Moral', Math.round(p.morale))}${d('Forma', Math.round(p.form))}${d('Condición física', Math.round(p.fitness) + '%')}${p.inj ? d('Lesión', `${p.inj.name} (${p.inj.w} sem)`) : ''}</div></div>
   <div class="center"><div>${radar(p, 160)}</div></div></div>
   <div class="grid g2 mt"><div>${attrBars(p)}</div><div><h3 class="mb">Historial</h3>${playerHistTable(p)}</div></div>

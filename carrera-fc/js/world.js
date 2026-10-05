@@ -24,11 +24,19 @@ function newWorld(mode) {
 
 function applyCustomSquad(t) {
   const list = CUSTOM_SQUADS[t.id]; if (!list) return;
-  for (const [name, pos, age, ovr, nat] of list) {
+  for (const [name, pos, age, ovr, nat, extra] of list) {
     const gen = squadOf(t).find(p => p.pos === pos && !p.custom);
     if (gen) { removeFromTeam(gen); delete G.pl[gen.id]; }
     const p = makePlayer({ name, pos, age, ovr, nat, tid: t.id });
-    p.custom = true; addToSquad(t, p);
+    p.custom = true;
+    if (extra) {
+      if (extra.attrs) { Object.assign(p.attrs, extra.attrs); p.ovr = calcOvr(p.attrs, p.pos); }
+      if (extra.pot) p.pot = Math.max(extra.pot, p.ovr);
+      if (extra.num) p.num = extra.num;
+      if (extra.height) p.height = extra.height;
+      refreshValue(p, true);
+    }
+    addToSquad(t, p);
   }
   assignNumbers(t);
 }
@@ -124,7 +132,7 @@ function playerBias() {
 /* Simula un evento: userRes es el resultado jugado por el usuario (o null) */
 function runEvent(userRes) {
   const e = curEvent(), fxs = eventFixtures(e);
-  const uf = userFixture(e);
+  const uf = fxs.find(f => f.h === G.utid || f.a === G.utid) || null;
   G.lastHome = !!(uf && uf.h === G.utid);
   for (const fx of fxs) {
     let res;

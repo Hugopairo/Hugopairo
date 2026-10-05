@@ -33,10 +33,21 @@ function newPlayerCareer(o) {
   p.pot = Math.max(pot, p.ovr + 8); refreshValue(p, true); p.wage = Math.max(1, p.wage);
   p.num = o.num || 0;
   G.pl[p.id] = p;
-  G.career = { pid: p.id, coach: 55, mates: 60, fame: 3, wealth: 8, roleBias: 8, focus: R.pick(ATTR), intensity: 1, lifestyle: 1, trainPts: 0, sponsors: [], assets: [], caps: 0, ncGoals: 0, called: false, log: [], offers: [], awards: [], freeAgent: false, retired: false, wantsOut: false, seasons: [], nlog: [], titles: [], loanOwner: null };
+  G.career = defaultCareer(p.id);
   G.career.focus = p.pos === 'POR' ? 'def' : p.pos === 'DC' ? 'sho' : p.pos === 'DFC' ? 'def' : p.pos === 'MC' ? 'pas' : 'dri';
   const clubs = [G.teams[24]].concat(G.teams.filter(t => t.rep <= 52 && t.rep >= 41).sort(() => Math.random() - .5).slice(0, 2));
   return { p, clubs };
+}
+function defaultCareer(pid) {
+  return { pid, coach: 55, mates: 60, fame: 3, wealth: 8, roleBias: 8, focus: 'def', intensity: 1, lifestyle: 1, trainPts: 0, sponsors: [], assets: [], caps: 0, ncGoals: 0, called: false, log: [], offers: [], awards: [], freeAgent: false, retired: false, wantsOut: false, seasons: [], nlog: [], titles: [], loanOwner: null };
+}
+function startAsHugo() {
+  newWorld('player');
+  const t = G.teams[24], p = squadOf(t).find(q => q.name === 'Hugo Gallego');
+  G.career = defaultCareer(p.id); G.career.focus = 'def';
+  G.utid = 24; p.contract = 3; p.wage = Math.max(p.wage, 1.5);
+  startSeasonSchedule(); G.pbias = playerBias(); autoPick(t);
+  inbox({ title: 'Bienvenido, Hugo', body: 'Eres el 14 de la EFB Jesús de la Ossa: central rápido y fuerte. Demuestra en cada partido por qué mereces jugar.', type: 'info' });
 }
 function startAt(tid) {
   const p = G.pl[G.career.pid], t = teamOf(tid);

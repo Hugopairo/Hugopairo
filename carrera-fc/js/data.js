@@ -134,7 +134,7 @@ const fmtK = k => k >= 1000 ? (k / 1000).toFixed(2).replace('.', ',') + ' M€' 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /* Equipos personalizados: edita nombres, posiciones, edades y notas a tu gusto.
-   [nombre, posición, edad, nota(OVR), nacionalidad] */
+   [nombre, posición, edad, nota(OVR), nacionalidad, {num, height, pot, attrs}(opcional)] */
 const CUSTOM_SQUADS = {
   24: [
     ['Jorge Mejía Moreno', 'POR', 27, 60, 'ES'],
@@ -143,6 +143,8 @@ const CUSTOM_SQUADS = {
     ['Víctor Justo García', 'MCD', 31, 58, 'ES'], ['Younes El Kanmboui', 'MCD', 23, 55, 'MA'],
     ['Jesús Caballero "Schaffino"', 'MC', 27, 60, 'ES'], ['Mario Muti', 'MC', 22, 54, 'ES'], ['Cristian Londoño', 'MCO', 24, 57, 'CO'],
     ['Ismael Moreno', 'EI', 21, 56, 'ES'], ['David Álvarez', 'EI', 26, 55, 'ES'], ['Hayrton José Torrealba', 'ED', 25, 58, 'VE'],
-    ['Pablo Caballero', 'DC', 29, 63, 'ES'], ['Javier Cano', 'DC', 28, 57, 'ES'], ['Hugo Gallego', 'DC', 20, 54, 'ES']
+    ['Pablo Caballero', 'DC', 29, 63, 'ES'], ['Javier Cano', 'DC', 28, 57, 'ES'],
+    // Hugo Gallego: central rápido y fuerte, 1,79 m, dorsal 14 (edad y notas estimadas: edítalas aquí)
+    ['Hugo Gallego', 'DFC', 20, 62, 'ES', { num: 14, height: 179, pot: 78, attrs: { pac: 72, sho: 42, pas: 55, dri: 55, def: 60, phy: 72 } }]
   ]
 };
