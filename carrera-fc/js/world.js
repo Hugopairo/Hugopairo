@@ -1,6 +1,15 @@
 'use strict';
 /* ===== Mundo: temporada, calendario, fichajes, finanzas, progresión ===== */
 const CUP_NAMES = ['Octavos de final', 'Cuartos de final', 'Semifinales', 'Final'];
+const PLANS = {
+  dinamica: { n: 'Dinámica', d: 'Desarrollo equilibrado según su posición', attrs: [] },
+  cazagoles: { n: 'Cazagoles', d: 'Tiro y ritmo', attrs: ['sho', 'pac'] },
+  creador: { n: 'Creador', d: 'Pase y regate', attrs: ['pas', 'dri'] },
+  muro: { n: 'Muro', d: 'Defensa y físico', attrs: ['def', 'phy'] },
+  velocista: { n: 'Velocista', d: 'Ritmo y regate', attrs: ['pac', 'dri'] },
+  atleta: { n: 'Atleta', d: 'Físico y ritmo', attrs: ['phy', 'pac'] }
+};
+const defaultPlan = pos => ({ DC: 'cazagoles', DFC: 'muro', MCD: 'muro', MC: 'creador', MCO: 'creador', EI: 'velocista', ED: 'velocista', LI: 'atleta', LD: 'atleta', POR: 'dinamica' }[pos] || 'dinamica');
 const TRAIN_FOCUS = { equilibrado: [], fisico: ['pac', 'phy'], ataque: ['sho', 'dri'], defensa: ['def', 'phy'], tecnico: ['pas', 'dri'] };
 
 function newWorld(mode) {
@@ -266,6 +275,7 @@ function develop(p, f, endSeason) {
     if (d < 0 && a >= 29 && (k === 'pac' || k === 'phy')) dk *= 1.5;
     if (p.pos !== 'POR' && tf.includes(k) && (G.mode === 'manager' || !isMe)) dk += .5 * f * (t && t.fac ? .7 + t.fac.train * .12 : 1);
     if (p.focus === k) dk += 1.1 * f;
+    if (p.plan && PLANS[p.plan] && PLANS[p.plan].attrs.includes(k)) dk += .7 * f;
     if (isMe && G.career.focus === k) dk += (G.career.trainPts / 11) * (a <= 26 ? 1 : .5);
     p.attrs[k] = R.clamp(p.attrs[k] + stoch(dk) - (dk < 0 && Math.random() < .3 ? 0 : 0), 18, 97);
   }
@@ -406,10 +416,10 @@ function genYouth(t, n) {
   for (let i = 0; i < n; i++) {
     const pos = R.pick(POS_LIST), age = R.int(15, 17);
     const ovr = Math.round(R.f(36, 48) + lv * 1.6 + age - 15);
-    let pot = R.int(58, 78) + lv * 2;
-    if (R.chance(.07 + lv * .035)) pot += R.int(8, 16);
-    const p = makePlayer({ pos, ovr, age, pot: Math.min(96, pot), tid: null, youth: true, contract: 3 });
-    p.tid = t.id; t.youth.push(p.id); G.pl[p.id] = p; p.wage = .5;
+    let pot = R.int(62, 84) + lv * 2.5;
+    if (R.chance(.12 + lv * .04)) pot += R.int(6, 14);
+    const p = makePlayer({ pos, ovr, age, pot: Math.min(96, Math.round(pot)), tid: null, youth: true, contract: 3 });
+    p.plan = defaultPlan(pos); p.tid = t.id; t.youth.push(p.id); G.pl[p.id] = p; p.wage = .5;
     out.push(p);
   }
   return out;
@@ -425,6 +435,13 @@ function shownPot(p) {
   const lv = teamOf(G.utid).fac.scout;
   const err = ((p.id * 7919) % 9 - 4) * (6 - lv) / 5;
   return R.clamp(Math.round(p.pot + err), p.ovr, 99);
+}
+function potRange(p) {
+  if (p.tid === G.utid && !p.youth) return [p.pot, p.pot];
+  if (p.scouted) return [p.pot, p.pot];
+  const lv = teamOf(G.utid).fac.scout, wd = (6 - lv) * 1.3 + (p.youth ? 1.5 : 0);
+  const fr = ((p.id * 7919) % 100) / 100;
+  return [R.clamp(Math.round(p.pot - wd * fr - 1), p.ovr, 99), R.clamp(Math.round(p.pot + wd * (1 - fr) + 1), p.ovr, 99)];
 }
 function scoutMission(o) {
   const t = teamOf(G.utid), cost = .12 + t.fac.scout * .03;
@@ -535,7 +552,7 @@ function startNewSeason() {
     if (t.id !== G.utid || G.mode === 'player') autoPick(t);
   }
   const me = teamOf(G.utid);
-  if (G.mode === 'manager') { genYouth(me, 2 + me.fac.academy + R.int(0, 1)); me.cash += 0; }
+  if (G.mode === 'manager') genYouth(me, 4 + me.fac.academy + R.int(0, 2));
   genFreeAgents(30);
   fixAISquads();
   G.fin.season = { inc: 0, exp: 0 };

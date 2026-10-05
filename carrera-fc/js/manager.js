@@ -175,13 +175,28 @@ ACT.scgo = () => {
   UI.scoutRes = r.found.map(p => p.id); toast(r.found.length ? `🔭 ${r.found.length} jugadores localizados` : 'No se encontró a nadie con esos criterios'); refresh();
 };
 
-/* ===== Cantera ===== */
+/* ===== Cantera (estilo plantilla de academia) ===== */
+const valCol = v => v >= 75 ? '#1de58b' : v >= 65 ? '#9be15d' : v >= 55 ? '#f6c744' : '#ff9d3d';
 SCREENS.youth = () => {
-  const me = teamOf(G.utid), ys = youthOf(me).sort((a, b) => b.pot - a.pot);
-  return `<div class="row between mb wrap"><h2>🌱 Cantera</h2><span class="pill">Academia nivel ${me.fac.academy}/5 ${stars(me.fac.academy, 5)}</span></div>
-  <div class="panel mb small muted">Cada temporada llegan nuevos juveniles según el nivel de tu academia. Los que no promociones antes de cumplir 19 se marcharán. El potencial mostrado es una estimación.</div>
-  <div class="grid g4">${ys.map(p => `<div class="panel center" style="cursor:pointer" data-a="player" data-id="${p.id}">${avatar(p, 52)}<div><b>${esc(p.name)}</b></div><div class="small muted">${NATS[p.nat].f} ${p.age} años · ${p.pos}</div><div class="row mt" style="justify-content:center">${ovrBadge(p.ovr)}<span class="small muted">POT</span><b>${shownPot(p)}</b></div>${p.releaseWarn ? '<div class="tag r mt">Debe promocionar ya</div>' : ''}</div>`).join('') || '<div class="muted">No hay juveniles. Llegarán nuevos al empezar la próxima temporada.</div>'}</div>`;
+  const me = teamOf(G.utid), ys = youthOf(me).sort((a, b) => potRange(b)[1] - potRange(a)[1] || b.pot - a.pot);
+  if (!ys.find(p => p.id === UI.ysel)) UI.ysel = ys[0] ? ys[0].id : null;
+  const sel = G.pl[UI.ysel];
+  const rows = ys.map(p => { const [lo, hi] = potRange(p), pl = PLANS[p.plan || defaultPlan(p.pos)]; return `<tr class="click ${p.id === UI.ysel ? 'me' : ''}" data-a="ysel" data-id="${p.id}"><td><span class="tag">${p.pos}</span></td><td><div class="row gap8">${avatar(p, 30)}<b>${esc(p.name)}</b></div></td><td>${p.age}</td><td><b style="color:${valCol(p.ovr)}">${p.ovr}</b></td><td><b style="color:#1de58b">${lo === hi ? lo : lo + ' - ' + hi}</b></td><td>${pl.n}${p.releaseWarn ? ' <span class="tag r">¡Ya!</span>' : ''}</td></tr>`; }).join('');
+  let det = '<div class="muted">Selecciona un juvenil.</div>';
+  if (sel) {
+    const [lo, hi] = potRange(sel), d = sel.ovr - (sel.o0 != null ? sel.o0 : sel.ovr);
+    det = `<div class="row gap8"><span class="small ${d > 0 ? 'pos' : 'muted'}">${d > 0 ? '+' + d : d < 0 ? d : ''}</span></div><div class="row"><b style="font-size:36px;color:${valCol(sel.ovr)}">${sel.ovr}</b><span class="muted">| ${sel.pos}</span></div><div class="row gap8"><span style="font-size:22px">${NATS[sel.nat].f}</span><b style="font-size:20px">${esc(sel.name)}</b></div>
+    <div class="grid g2 mt"><div><div class="muted small">Potencial</div><b style="font-size:20px;color:#1de58b">${lo === hi ? lo : lo + '-' + hi}</b></div><div><div class="muted small">Edad</div><b style="font-size:20px">${sel.age}</b></div></div>
+    <div class="mt">${attrBars(sel)}</div>
+    <h3 class="mt mb">Plan de desarrollo</h3><select id="yplan" data-chg="yplan">${Object.entries(PLANS).map(([k, v]) => `<option value="${k}" ${(sel.plan || defaultPlan(sel.pos)) === k ? 'selected' : ''}>${v.n}</option>`).join('')}</select><div class="small muted mt">${PLANS[sel.plan || defaultPlan(sel.pos)].d}</div>
+    <div class="row between small mt"><span class="muted">Progreso</span><b>${sel.o0 != null ? sel.o0 : sel.ovr} → ${sel.ovr}</b></div><div class="row between small"><span class="muted">Termina en</span><b>${Math.max(0, 19 - sel.age)} temp.</b></div>
+    <div class="col mt"><button class="btn pri" data-a="mpromote" data-id="${sel.id}">⬆ Promocionar al primer equipo</button><button class="btn red" data-a="mrelease" data-id="${sel.id}">Liberar</button></div>`;
+  }
+  return `<div class="row between mb wrap"><h2>🌱 Plantilla de academia</h2><div class="row gap8"><span class="pill">Academia ${stars(me.fac.academy, 5)}</span><span class="pill">Ojeadores ${stars(me.fac.scout, 5)}</span></div></div>
+  <div class="grid" style="grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);align-items:start" id="ygrid"><div class="panel"><div class="tscroll"><table class="tbl"><thead><tr><th>Pos</th><th>Nombre</th><th>Edad</th><th>GRL</th><th>POT ▼</th><th>Plan</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="muted">Aún no hay juveniles. Llegan nuevos al empezar cada temporada.</td></tr>'}</tbody></table></div><div class="small muted mt">Los que no promociones antes de cumplir 19 se marcharán. El rango de potencial se afina con la red de ojeadores.</div></div><div class="panel">${det}</div></div>`;
 };
+ACT.ysel = d => { UI.ysel = +d.id; refresh(); };
+ACT.yplan = (d, el) => { const p = G.pl[UI.ysel]; if (p) { p.plan = el.value; toast('Plan de desarrollo: ' + PLANS[el.value].n); refresh(); } };
 
 /* ===== Club: finanzas e instalaciones ===== */
 const FAC = { train: ['Centro de entrenamiento', '🏋️', 'Mejora el progreso de todos los jugadores'], academy: ['Academia', '🌱', 'Más y mejores juveniles'], stadium: ['Estadio', '🏟️', '+6.000 localidades por nivel'], scout: ['Red de ojeadores', '🔭', 'Estimaciones de potencial más precisas'], physio: ['Fisioterapia', '💆', 'Recuperación de lesiones y fatiga'] };

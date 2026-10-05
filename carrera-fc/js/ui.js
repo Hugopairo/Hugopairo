@@ -357,7 +357,7 @@ ACT.player = d => showPlayer(+d.id);
 function showPlayer(id) {
   const p = G.pl[id]; if (!p) return;
   const t = p.tid != null ? teamOf(p.tid) : null, own = p.tid === G.utid;
-  const pot = shownPot(p), potTxt = own || p.scouted ? `<b>${p.pot}</b>` : `<b>~${pot}</b> <span class="tiny muted">(estimado)</span>`;
+  const pr = potRange(p), potTxt = pr[0] === pr[1] ? `<b>${p.pot}</b>` : `<b>${pr[0]}-${pr[1]}</b> <span class="tiny muted">(estimado)</span>`;
   const showPot = p.age <= 30 || own;
   const d = (a, b) => `<div class="row between small" style="padding:3px 0;border-bottom:1px solid #1a2447"><span class="muted">${a}</span><span>${b}</span></div>`;
   const delta = p.o0 != null && p.o0 !== p.ovr ? ` <span class="${p.ovr > p.o0 ? 'pos' : 'neg'} small">${p.ovr > p.o0 ? '▲' : '▼'}${Math.abs(p.ovr - p.o0)}</span>` : '';

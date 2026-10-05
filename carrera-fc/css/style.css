@@ -157,3 +157,4 @@ canvas.pitch{width:100%;aspect-ratio:105/68;border-radius:14px;border:1px solid 
 .fcard.sm .avw{display:none}
 @media(max-width:560px){.score .sc{font-size:34px}.score .tm{font-size:15px}.modal{padding:14px}.panel{padding:12px}}
 .fcard{text-align:left}.fcard .nm{text-align:center}
+@media(max-width:900px){#ygrid{grid-template-columns:1fr!important}}
