@@ -35,7 +35,7 @@ function newPlayerCareer(o) {
   G.pl[p.id] = p;
   G.career = { pid: p.id, coach: 55, mates: 60, fame: 3, wealth: 8, roleBias: 8, focus: R.pick(ATTR), intensity: 1, lifestyle: 1, trainPts: 0, sponsors: [], assets: [], caps: 0, ncGoals: 0, called: false, log: [], offers: [], awards: [], freeAgent: false, retired: false, wantsOut: false, seasons: [], nlog: [], titles: [], loanOwner: null };
   G.career.focus = p.pos === 'POR' ? 'def' : p.pos === 'DC' ? 'sho' : p.pos === 'DFC' ? 'def' : p.pos === 'MC' ? 'pas' : 'dri';
-  const clubs = G.teams.filter(t => t.rep <= 52 && t.rep >= 41).sort(() => Math.random() - .5).slice(0, 3);
+  const clubs = [G.teams[24]].concat(G.teams.filter(t => t.rep <= 52 && t.rep >= 41).sort(() => Math.random() - .5).slice(0, 2));
   return { p, clubs };
 }
 function startAt(tid) {

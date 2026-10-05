@@ -6,12 +6,13 @@ const TRAIN_FOCUS = { equilibrado: [], fisico: ['pac', 'phy'], ataque: ['sho', '
 function newWorld(mode) {
   PID = 1;
   G = {
-    v: 1, mode, season: 2026, week: 0, cal: [], fix: { 1: [], 2: [] }, table: { 1: [], 2: [] }, cup: null, teams: CLUBS.map(makeTeam), pl: {}, utid: 0,
+    v: 1, mode, season: 2026, week: 0, cal: [], fix: { 1: [], 2: [], 3: [] }, table: { 1: [], 2: [], 3: [] }, cup: null, teams: CLUBS.map(makeTeam), pl: {}, utid: 0,
     news: [], inbox: [], results: [], hist: [], board: { conf: 60, target: 6, txt: '' }, fans: 60, mgr: { name: 'Mister' }, career: null, pbias: {},
     phase: 'play', fin: { last: null, season: { inc: 0, exp: 0 }, hist: [] }, offerId: 1, sacked: false
   };
   G.teams.forEach(t => {
     genSquad(t);
+    applyCustomSquad(t);
     t.tbudget = Math.round((3 + Math.pow(Math.max(0, t.rep - 38), 2) / 22) * R.f(.8, 1.25) * 10) / 10;
     t.cash = t.tbudget * 1.6 + 4;
     autoPick(t);
@@ -19,6 +20,17 @@ function newWorld(mode) {
   genFreeAgents(70);
   startSeasonSchedule();
   return G;
+}
+
+function applyCustomSquad(t) {
+  const list = CUSTOM_SQUADS[t.id]; if (!list) return;
+  for (const [name, pos, age, ovr, nat] of list) {
+    const gen = squadOf(t).find(p => p.pos === pos && !p.custom);
+    if (gen) { removeFromTeam(gen); delete G.pl[gen.id]; }
+    const p = makePlayer({ name, pos, age, ovr, nat, tid: t.id });
+    p.custom = true; addToSquad(t, p);
+  }
+  assignNumbers(t);
 }
 
 /* ===== Calendario ===== */
@@ -32,7 +44,7 @@ function roundRobin(ids) {
   return rounds;
 }
 function startSeasonSchedule() {
-  for (const div of [1, 2]) {
+  for (const div of DIVS) {
     const ids = G.teams.filter(t => t.div === div).map(t => t.id);
     const rr = roundRobin(ids);
     G.fix[div] = rr.concat(rr.map(r => r.map(([h, a]) => [a, h])));
@@ -59,7 +71,7 @@ const pairUp = ids => { const p = []; for (let i = 0; i < ids.length; i += 2) p.
 const evName = e => e.t === 'L' ? `Jornada ${e.r + 1}` : e.t === 'C' ? `Copa · ${CUP_NAMES[e.r]}` : 'Parón internacional';
 const curEvent = () => G.cal[G.week];
 function eventFixtures(e) {
-  if (e.t === 'L') return [1, 2].flatMap(div => G.fix[div][e.r].map(([h, a]) => ({ h, a, div, kind: 'L' })));
+  if (e.t === 'L') return DIVS.flatMap(div => G.fix[div][e.r].map(([h, a]) => ({ h, a, div, kind: 'L' })));
   if (e.t === 'C') return G.cup.pairs.map(([h, a]) => ({ h, a, kind: 'C', final: e.r === 3 }));
   return [];
 }
@@ -198,7 +210,7 @@ function setupBoard() {
   const rank = order.findIndex(x => x.id === t.id) + 1;
   let target, txt;
   if (t.div === 1) { target = R.clamp(rank - 1, 1, 10); txt = target === 1 ? 'Ganar la liga' : target <= 4 ? `Terminar entre los ${target} primeros` : target <= 8 ? 'Terminar en la mitad alta de la tabla' : 'Evitar el descenso'; }
-  else { target = R.clamp(rank - 1, 2, 8); txt = target <= 2 ? 'Ascender a Primera' : target <= 5 ? 'Pelear por el ascenso (top 6)' : 'Terminar en mitad de tabla'; if (target <= 2) target = 2; else if (target <= 5) target = 6; else target = 9; }
+  else { target = R.clamp(rank - 1, 2, 8); txt = target <= 2 ? (t.div === 3 ? 'Ascender a Segunda' : 'Ascender a Primera') : target <= 5 ? 'Pelear por el ascenso (top 6)' : 'Terminar en mitad de tabla'; if (target <= 2) target = 2; else if (target <= 5) target = 6; else target = 9; }
   G.board.target = target; G.board.txt = txt;
 }
 
@@ -206,7 +218,7 @@ function setupBoard() {
 function wageBill(t) { return squadOf(t).reduce((s, p) => s + p.wage, 0) / 1000; } // M€/semana
 function upkeep(t) { return (t.fac.train + t.fac.academy + t.fac.stadium + t.fac.scout + t.fac.physio) * .018; }
 function baseIncome(t) {
-  const f = t.div === 1 ? 1 : .16;
+  const f = t.div === 1 ? 1 : t.div === 2 ? .16 : .03;
   return { tv: Math.pow(t.rep / 100, 2.2) * 1.2 * f, spons: Math.pow(t.rep / 100, 2.2) * .55 * f * (.8 + G.fans / 250), merch: Math.pow(t.rep / 100, 2.2) * .3 * f * (G.fans / 70) };
 }
 function attendance(t) {
@@ -417,10 +429,10 @@ function scoutMission(o) {
 
 /* ===== Fin de temporada ===== */
 function seasonSummary() {
-  const t1 = table(1), t2 = table(2), me = teamOf(G.utid);
+  const t1 = table(1), t2 = table(2), t3 = table(3), me = teamOf(G.utid);
   const pos = tablePos(G.utid);
   const all = Object.values(G.pl).filter(p => p.tid != null && p.st.app >= 8);
-  const posOf = {}; [t1, t2].forEach(tb => tb.forEach((r, i) => posOf[r.tid] = i + 1));
+  const posOf = {}; [t1, t2, t3].forEach(tb => tb.forEach((r, i) => posOf[r.tid] = i + 1));
   const score = p => {
     const av = p.st.rs / Math.max(1, p.st.rn), t = teamOf(p.tid);
     const gk = p.pos === 'POR' ? p.st.cs * .9 : 0;
@@ -432,7 +444,7 @@ function seasonSummary() {
   const myRank = G.career ? ranking.findIndex(r => r.p.id === G.career.pid) + 1 : 0;
   const young = all.filter(p => p.age <= 21).sort((a, b) => b.st.rs / b.st.rn - a.st.rs / a.st.rn)[0];
   return {
-    season: G.season, champion: t1[0].tid, promoted: [t2[0].tid, t2[1].tid], relegated: [t1[10].tid, t1[11].tid], pos, div: me.div,
+    season: G.season, champion: t1[0].tid, promoted: [t2[0].tid, t2[1].tid], relegated: [t1[10].tid, t1[11].tid], promoted3: [t3[0].tid, t3[1].tid], relegated2: [t2[10].tid, t2[11].tid], pos, div: me.div,
     cup: G.cup.winner, myRank, ballon: ranking.slice(0, 5), scorers, young, t1: t1.map(r => ({ ...r })), t2: t2.map(r => ({ ...r }))
   };
 }
@@ -472,7 +484,7 @@ function startNewSeason() {
   const profit = Math.max(0, G.fin.season.inc - G.fin.season.exp);
   G.season++;
   // ascensos/descensos
-  sum.promoted.forEach(id => teamOf(id).div = 1); sum.relegated.forEach(id => teamOf(id).div = 2);
+  sum.promoted.forEach(id => teamOf(id).div = 1); sum.relegated.forEach(id => teamOf(id).div = 2); sum.promoted3.forEach(id => teamOf(id).div = 2); sum.relegated2.forEach(id => teamOf(id).div = 3);
   G.hist[G.hist.length - 1].div = sum.div;
   // cesiones vuelven
   for (const p of Object.values(G.pl)) if (p.loan && p.tid != null) { const owner = G.teams[p.loan.owner]; const w = p.wage; if (owner) { removeFromTeam(p); addToSquad(owner, p); p.wage = p.loan.wage || w; p.contract = Math.max(1, (p.loan.contract || 2) - 1); p.num = 0; assignNumbers(owner); } p.loan = null; }
@@ -505,8 +517,8 @@ function startNewSeason() {
   }
   // equipos
   for (const t of G.teams) {
-    t.tbudget = Math.round((3 + Math.pow(Math.max(0, t.rep - 38), 2) / 22 * (t.div === 1 ? 1 : .6)) * R.f(.8, 1.3) * 10) / 10 + (t.id === G.utid && G.mode === 'manager' ? profit * .4 : 0);
-    t.rep = R.clamp(t.rep + (sum.promoted.includes(t.id) ? 3 : sum.relegated.includes(t.id) ? -3 : 0) + (sum.champion === t.id ? 2 : 0), 30, 97);
+    t.tbudget = Math.round((3 + Math.pow(Math.max(0, t.rep - 38), 2) / 22 * (t.div === 1 ? 1 : t.div === 2 ? .6 : .15)) * R.f(.8, 1.3) * 10) / 10 + (t.id === G.utid && G.mode === 'manager' ? profit * .4 : 0);
+    t.rep = R.clamp(t.rep + (sum.promoted.includes(t.id) || sum.promoted3.includes(t.id) ? 3 : sum.relegated.includes(t.id) || sum.relegated2.includes(t.id) ? -3 : 0) + (sum.champion === t.id ? 2 : 0), 30, 97);
     if (t.id !== G.utid || G.mode === 'player') fillSquad(t);
     assignNumbers(t);
     if (t.id !== G.utid || G.mode === 'player') autoPick(t);

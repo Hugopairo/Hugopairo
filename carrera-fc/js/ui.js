@@ -137,6 +137,7 @@ SCREENS.msetup = () => {
   <div class="panel mb"><label class="f">Tu nombre<input id="mname" value="${esc(UI.setup.name)}" placeholder="Ej: Hugo Pairo" maxlength="24"></label></div>
   <h3 class="mb">${DIV_NAME[1]}</h3><div class="grid g3 mb">${G.teams.filter(t => t.div === 1).map(opt).join('')}</div>
   <h3 class="mb">${DIV_NAME[2]} · reto difícil</h3><div class="grid g3 mb">${G.teams.filter(t => t.div === 2).map(opt).join('')}</div>
+  <h3 class="mb">${DIV_NAME[3]} · modo leyenda (fútbol regional)</h3><div class="grid g3 mb">${G.teams.filter(t => t.div === 3).map(opt).join('')}</div>
   <div style="position:sticky;bottom:12px"><button class="btn pri lg" data-a="startm" style="width:100%" ${UI.setup.tid == null ? 'disabled' : ''}>Empezar carrera como manager ▶</button></div></div>`;
 };
 ACT.totitle = () => go('title');
@@ -296,11 +297,11 @@ SCREENS.league = () => {
   const tab = UI.tab.league || 'table';
   const tabs = [['table', 'Clasificación'], ['fix', 'Partidos'], ['cup', 'Copa'], ['stats', 'Estadísticas']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-a="tab" data-s="league" data-k="${k}">${l}</button>`).join('');
   const div = UI.tab.div || teamOf(G.utid).div;
-  const divTabs = [1, 2].map(d => `<button class="${div === d ? 'on' : ''}" data-a="tab" data-s="div" data-k="${d}" data-n="1">${DIV_NAME[d]}</button>`).join('');
+  const divTabs = DIVS.map(d => `<button class="${div === d ? 'on' : ''}" data-a="tab" data-s="div" data-k="${d}" data-n="1">${DIV_NAME[d]}</button>`).join('');
   let body = '';
   if (tab === 'table') {
     const tb = table(div), n = tb.length;
-    body = `<div class="tabs">${divTabs}</div><div class="panel"><div class="tscroll"><table class="tbl"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th><th>Forma</th></tr></thead><tbody>${tb.map((r, i) => { const t = teamOf(r.tid); const cls = r.tid === G.utid ? 'me ' : ''; const z = div === 1 ? (i < 2 ? 'up' : i >= n - 2 ? 'dn' : '') : (i < 2 ? 'up' : ''); return `<tr class="${cls}${z}"><td>${i + 1}</td><td>${crest(t, 18)} ${esc(t.name)}</td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.gf - r.ga}</td><td><b>${r.pts}</b></td><td>${formDots(r.form)}</td></tr>`; }).join('')}</tbody></table></div><div class="small muted mt">${div === 1 ? '🟩 Campeón · 🟥 Descenso (2 últimos)' : '🟩 Ascenso directo (2 primeros)'}</div></div>`;
+    body = `<div class="tabs">${divTabs}</div><div class="panel"><div class="tscroll"><table class="tbl"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th><th>Forma</th></tr></thead><tbody>${tb.map((r, i) => { const t = teamOf(r.tid); const cls = r.tid === G.utid ? 'me ' : ''; const z = div === 3 ? (i < 2 ? 'up' : '') : (i < 2 ? 'up' : i >= n - 2 && div === 1 ? 'dn' : i >= n - 2 ? 'dn' : ''); return `<tr class="${cls}${z}"><td>${i + 1}</td><td>${crest(t, 18)} ${esc(t.name)}</td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.gf - r.ga}</td><td><b>${r.pts}</b></td><td>${formDots(r.form)}</td></tr>`; }).join('')}</tbody></table></div><div class="small muted mt">${div === 1 ? '🟩 Líderes · 🟥 Descenso (2 últimos)' : div === 2 ? '🟩 Ascenso directo (2 primeros) · 🟥 Descenso (2 últimos)' : '🟩 Ascenso directo (2 primeros)'}</div></div>`;
   } else if (tab === 'fix') {
     const e = curEvent(); let lr = UI.tab.round != null ? UI.tab.round : Math.max(0, Math.min(21, (e && e.t === 'L' ? e.r : G.cal.filter(x => x.t === 'L').length ? (e ? e.lr : 21) : 21) - (e && e.t === 'L' ? 0 : 1)));
     lr = R.clamp(lr, 0, 21);

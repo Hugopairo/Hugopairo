@@ -89,6 +89,8 @@ const NATS = {
   CO: { f: '🇨🇴', n: 'Colombia', w: 3, a: 'Juan Camilo Andrés Mateo Sebastián Brayan Yerson Kevin'.split(' '), b: 'Rincón Cárdenas Mosquera Quintero Valencia Ospina Bedoya Cuesta Ríos Palacios'.split(' ') },
   BE: { f: '🇧🇪', n: 'Bélgica', w: 2, a: 'Thomas Arne Wout Jens Lars Tom Yannick Bart'.split(' '), b: 'Peeters Janssens Maes Claes Willems Goossens Lambert Wouters De Smet Jacobs'.split(' ') },
   HR: { f: '🇭🇷', n: 'Croacia', w: 2, a: 'Luka Ivan Marko Josip Ante Domagoj Filip'.split(' '), b: 'Kovač Horvat Babić Marić Jurić Novak Petrović Vuković Tomić Perić'.split(' ') },
+  RO: { f: '🇷🇴', n: 'Rumanía', w: 0, a: ['Andrei', 'Mihai'], b: ['Popescu', 'Balan'] },
+  VE: { f: '🇻🇪', n: 'Venezuela', w: 0, a: ['José', 'Luis'], b: ['Torrealba', 'Pérez'] },
   JP: { f: '🇯🇵', n: 'Japón', w: 2, a: 'Haruto Ren Sota Yuki Kaito Takumi Daiki Riku'.split(' '), b: 'Tanaka Sato Suzuki Takahashi Watanabe Kobayashi Nakamura Kato Yoshida Hayashi'.split(' ') }
 };
 const NAT_KEYS = Object.keys(NATS);
@@ -107,11 +109,18 @@ const CLUBS = [
   ['Palmeral CF', 'PAL', '#0b8f3a', '#ffffff', 49, 31, 'Palmeral'], ['Bahía de Cádiz', 'BCA', '#ffd400', '#1a3b8a', 48, 20, 'Bahía'],
   ['Pucela United', 'PUC', '#6a1f8a', '#ffffff', 47, 27, 'Pucela'], ['Sporting Ribera', 'SRI', '#d6001c', '#ffffff', 46, 30, 'Ribera'],
   ['Teide FC', 'TEI', '#ffffff', '#0057b8', 45, 22, 'Teide'], ['Alcazaba CD', 'ALC', '#d62828', '#ffffff', 44, 15, 'Alcazaba'],
-  ['Illes Balears', 'IBA', '#d62828', '#111111', 43, 24, 'Illes'], ['Extremadura UD', 'EXT', '#2a9d3a', '#ffffff', 41, 12, 'Extremadura']
-].map((c, i) => ({ id: i, name: c[0], short: c[1], c1: c[2], c2: c[3], rep: c[4], cap: c[5], city: c[6], div: i < 12 ? 1 : 2 }));
+  ['Illes Balears', 'IBA', '#d62828', '#111111', 43, 24, 'Illes'], ['Extremadura UD', 'EXT', '#2a9d3a', '#ffffff', 41, 12, 'Extremadura'],
+  ['EFB Jesús de la Ossa', 'EJO', '#d62828', '#ffffff', 36, 2, 'Tarancón'], ['CD Alcarria', 'ALA', '#1f7a3a', '#ffffff', 35, 2, 'Alcarria'],
+  ['Atlético Quijote', 'AQU', '#f2c200', '#1a1a1a', 34, 2, 'La Mancha'], ['UD Dulcinea', 'DUL', '#8a2be2', '#ffffff', 33, 1.5, 'Dulcinea'],
+  ['CD Molino Viejo', 'MOV', '#ffffff', '#2457c5', 32, 1.5, 'Molino'], ['Real Mancha CF', 'RMA', '#c0392b', '#f5f5f5', 31, 2.5, 'Mancha'],
+  ['CD Sierra Alta', 'SAL', '#2c3e50', '#e67e22', 30, 1.5, 'Sierra'], ['Unión Alcarreña', 'UAL', '#16a085', '#ffffff', 29, 1.5, 'Alcarreña'],
+  ['CF La Encina', 'ENC', '#27ae60', '#f1c40f', 28, 1, 'La Encina'], ['CD Viñedos', 'VIN', '#6c1d45', '#ffffff', 27, 1, 'Viñedos'],
+  ['Atlético Cigarral', 'CIG', '#e74c3c', '#2c3e50', 26, 1, 'Cigarral'], ['UD Tablas', 'TAB', '#3498db', '#ffffff', 25, 1, 'Tablas']
+].map((c, i) => ({ id: i, name: c[0], short: c[1], c1: c[2], c2: c[3], rep: c[4], cap: c[5], city: c[6], div: i < 12 ? 1 : i < 24 ? 2 : 3 }));
 
 const MENTALITY = ['Defensivo', 'Equilibrado', 'Ofensivo'];
-const DIV_NAME = { 1: 'Liga Primera', 2: 'Liga Segunda' };
+const DIV_NAME = { 1: 'Liga Primera', 2: 'Liga Segunda', 3: 'Primera Autonómica' };
+const DIVS = [1, 2, 3];
 
 const fmtM = m => {
   const a = Math.abs(m);
@@ -123,3 +132,17 @@ const fmtM = m => {
 };
 const fmtK = k => k >= 1000 ? (k / 1000).toFixed(2).replace('.', ',') + ' M€' : Math.round(k) + ' K€';
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* Equipos personalizados: edita nombres, posiciones, edades y notas a tu gusto.
+   [nombre, posición, edad, nota(OVR), nacionalidad] */
+const CUSTOM_SQUADS = {
+  24: [
+    ['Jorge Mejía Moreno', 'POR', 27, 60, 'ES'],
+    ['Rubén Martínez Álvarez', 'DFC', 28, 57, 'ES'], ['Jesús Almarza Aguilar', 'DFC', 30, 56, 'ES'], ['Daniel Toledo Blanco', 'DFC', 25, 55, 'ES'],
+    ['Marcos Zapata Loeches', 'LI', 24, 55, 'ES'], ['Hagi Balan', 'LD', 26, 56, 'RO'],
+    ['Víctor Justo García', 'MCD', 31, 58, 'ES'], ['Younes El Kanmboui', 'MCD', 23, 55, 'MA'],
+    ['Jesús Caballero "Schaffino"', 'MC', 27, 60, 'ES'], ['Mario Muti', 'MC', 22, 54, 'ES'], ['Cristian Londoño', 'MCO', 24, 57, 'CO'],
+    ['Ismael Moreno', 'EI', 21, 56, 'ES'], ['David Álvarez', 'EI', 26, 55, 'ES'], ['Hayrton José Torrealba', 'ED', 25, 58, 'VE'],
+    ['Pablo Caballero', 'DC', 29, 63, 'ES'], ['Javier Cano', 'DC', 28, 57, 'ES'], ['Hugo Gallego', 'DC', 20, 54, 'ES']
+  ]
+};

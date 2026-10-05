@@ -261,7 +261,7 @@ SCREENS.seasonend = () => {
   const nextBlock = G.mode === 'player' && G.career.freeAgent ? '<button class="btn lg" disabled>Elige primero un contrato</button>' : `<button class="btn pri lg" data-a="newseason">Comenzar temporada ${seasonLbl(G.season + 1)} ▶</button>`;
   return `<div class="main" style="max-width:1100px;margin:0 auto;padding:18px 16px 80px"><div class="center mb"><div class="tag g">FIN DE TEMPORADA ${seasonLbl(s.season)}</div><h2 style="font-size:32px;margin-top:8px">Resumen del año</h2></div>
   <div class="grid g3"><div class="panel center"><h3>🏆 Campeón de Liga</h3><div class="mt">${crest(tn(s.champion), 56)}</div><b>${esc(tn(s.champion).name)}</b></div><div class="panel center"><h3>🏆 Campeón de Copa</h3><div class="mt">${crest(tn(s.cup), 56)}</div><b>${esc(tn(s.cup).name)}</b></div><div class="panel center"><h3>Tu club</h3><div class="mt">${crest(me, 56)}</div><b>${s.pos}º · ${DIV_NAME[s.div]}</b></div></div>
-  <div class="grid g2 mt"><div class="panel"><h3>↕ Ascensos y descensos</h3>${s.promoted.map(i => `<div class="row small">⬆ ${crest(tn(i), 18)} ${esc(tn(i).name)}</div>`).join('')}${s.relegated.map(i => `<div class="row small">⬇ ${crest(tn(i), 18)} ${esc(tn(i).name)}</div>`).join('')}</div><div class="panel"><h3>👟 Máximos goleadores</h3>${s.scorers.map((p, i) => `<div class="row small" style="padding:3px 0"><span class="muted">${i + 1}</span><span class="grow">${esc(p.name)} <span class="muted">${esc(tn(p.tid).short)}</span></span><b>${p.st.gls}</b></div>`).join('')}</div></div>
+  <div class="grid g2 mt"><div class="panel"><h3>↕ Ascensos y descensos</h3>${s.promoted.concat(s.promoted3).map(i => `<div class="row small">⬆ ${crest(tn(i), 18)} ${esc(tn(i).name)}</div>`).join('')}${s.relegated.concat(s.relegated2).map(i => `<div class="row small">⬇ ${crest(tn(i), 18)} ${esc(tn(i).name)}</div>`).join('')}</div><div class="panel"><h3>👟 Máximos goleadores</h3>${s.scorers.map((p, i) => `<div class="row small" style="padding:3px 0"><span class="muted">${i + 1}</span><span class="grow">${esc(p.name)} <span class="muted">${esc(tn(p.tid).short)}</span></span><b>${p.st.gls}</b></div>`).join('')}</div></div>
   <div class="panel mt"><h3>🥇 Balón de Oro</h3><div class="row wrap" style="justify-content:space-around">${pcards}</div></div>${body}<div class="center mt">${nextBlock}</div></div>`;
 };
 ACT.newseason = () => {
@@ -273,7 +273,7 @@ ACT.newseason = () => {
 /* ===== Despido ===== */
 SCREENS.sacked = () => {
   const me = teamOf(G.utid);
-  const opts = G.teams.filter(t => t.id !== G.utid && t.rep <= me.rep + 4 && t.rep >= 40).sort(() => Math.random() - .5).slice(0, 3);
+  const opts = G.teams.filter(t => t.id !== G.utid && t.rep <= me.rep + 6 && t.rep >= 20).sort(() => Math.random() - .5).slice(0, 3);
   UI.sackOpts = opts.map(t => t.id);
   return `<div class="title"><div style="font-size:72px">📉</div><h1 style="font-size:36px">Has sido despedido</h1><p class="muted" style="max-width:520px">La directiva del <b>${esc(me.name)}</b> ha perdido la confianza en ti. Pero tu carrera no termina aquí: estos clubes están interesados en tus servicios.</p><div class="col" style="width:min(520px,100%)">${opts.map(t => `<div class="choice" data-a="takejob" data-id="${t.id}"><div class="row">${crest(t, 40)}<div class="grow"><b>${esc(t.name)}</b><div class="small muted">${DIV_NAME[t.div]} · ${stars(t.rep / 20, 5)}</div></div></div></div>`).join('')}</div><button class="btn" data-a="totitle">Abandonar la carrera</button></div>`;
 };

@@ -18,7 +18,7 @@ Todo es ficticio: clubes, ligas y jugadores se generan proceduralmente.
 - Fin de temporada con **Balón de Oro**, Pichichi, títulos, palmarés, historial y Hall of Fame al retirarte.
 
 ### 📋 Modo Manager
-- Elige uno de los 24 clubes (2 divisiones, con ascensos y descensos) + **Copa** de eliminatoria.
+- Elige uno de los 36 clubes (3 divisiones: Primera, Segunda y **Primera Autonómica**, con ascensos y descensos) + **Copa** de eliminatoria.
 - **Táctica**: 8 formaciones, once y banquillo por intercambio visual, mentalidad, presión, ritmo y línea defensiva. Cambios y táctica en directo.
 - **Fichajes**: buscador con filtros (posición, edad, precio, promesas, libres), negociación de traspaso + salario + contrato, lista de vigilados, ofertas por tus jugadores.
 - **Ojeadores**: misiones que revelan el **potencial exacto** (el de los demás es una estimación según tu red de ojeadores).
@@ -26,6 +26,11 @@ Todo es ficticio: clubes, ligas y jugadores se generan proceduralmente.
 - **Finanzas**: ingresos (TV, patrocinio, merchandising, entradas), salarios, precio de entradas y mejora de 5 instalaciones.
 - Directiva con objetivos y confianza (¡te pueden despedir!), rueda de prensa, moral, lesiones, sanciones, contratos.
 - Progresión realista: los jóvenes crecen hacia su potencial, los veteranos decaen.
+
+## Club personalizado: EFB Jesús de la Ossa
+La **EFB Jesús de la Ossa** (Tarancón, Primera Autonómica) está en el juego con los nombres de su plantilla.
+Las posiciones, edades y notas son **estimaciones**: edítalas en `CUSTOM_SQUADS` (final de `js/data.js`).
+En el Modo Jugador siempre aparece como una de las 3 ofertas iniciales.
 
 ## Motor de partido
 Simulación minuto a minuto: posesión, ocasiones, tiros (bloqueados / fuera / a puerta), paradas, penaltis, tarjetas, expulsiones, lesiones, cambios (IA y manager), fatiga, ventaja de local y valoraciones individuales. Campo animado en `<canvas>`.
