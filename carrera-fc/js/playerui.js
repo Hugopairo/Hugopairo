@@ -22,6 +22,7 @@ function homeP() {
   <div class="col">${nextMatchCard()}${alerts.length ? `<div class="panel"><h3>Atención</h3>${alerts.map(a => `<div class="news">${a}</div>`).join('')}</div>` : ''}
   <div class="grid g2"><div class="panel"><h3>Temporada ${seasonLbl(G.season)}</h3><div class="kpi"><div class="statbox"><div class="muted tiny">PARTIDOS</div><div class="v">${s.app}</div></div><div class="statbox"><div class="muted tiny">GOLES</div><div class="v">${s.gls}</div></div><div class="statbox"><div class="muted tiny">ASIST.</div><div class="v">${s.ast}</div></div><div class="statbox"><div class="muted tiny">NOTA</div><div class="v">${avg}</div></div></div>${s.gls ? `<div class="small muted mt">Puesto ${rank} en la tabla de goleadores</div>` : ''}<div class="row gap8 mt wrap"><span class="pill">${crest(me, 14)} ${esc(me.name)}</span><span class="pill">${tablePos(me.id)}º en ${DIV_NAME[me.div]}</span><span class="pill">💶 ${eur(c.wealth / 1000)}</span></div></div>
   <div class="panel"><h3>Últimos partidos</h3>${logRows}</div></div>
+  ${challengePanel(true)}
   <div class="panel"><h3>Noticias</h3>${G.news.slice(0, 5).map(n => `<div class="news ${n.type}">${esc(n.txt)}</div>`).join('') || '<span class="muted small">Sin noticias</span>'}</div>
   <div class="panel row wrap gap8"><button class="btn" data-a="nav" data-k="agenda">🗓️ Planificar semana</button><button class="btn" data-a="nav" data-k="agent">🤝 Agente</button><button class="btn" data-a="nav" data-k="myplayer">⭐ Mi ficha</button></div></div></div>`;
 }

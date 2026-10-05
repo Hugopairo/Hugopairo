@@ -79,11 +79,12 @@ function render() {
   const noShell = ['title', 'msetup', 'psetup', 'pclub', 'sacked', 'match', 'prematch', 'postmatch', 'seasonend', 'retired'].includes(UI.screen);
   $('#app').innerHTML = noShell ? html : shell(html);
   const af = SCREENS[UI.screen + '$']; if (af) af(UI.params);
+  if (G && G.toasts) while (G.toasts.length) toast(G.toasts.shift());
 }
 const refresh = () => go(UI.screen, UI.params, true);
 
-const NAV_M = [['home', '🏠', 'Inicio'], ['squad', '👥', 'Plantilla'], ['tactics', '📋', 'Táctica'], ['market', '💸', 'Fichajes'], ['scout', '🔭', 'Ojeadores'], ['youth', '🌱', 'Cantera'], ['finance', '🏟️', 'Club'], ['league', '🏆', 'Liga'], ['inbox', '✉️', 'Buzón']];
-const NAV_P = [['home', '🏠', 'Inicio'], ['myplayer', '⭐', 'Mi jugador'], ['agenda', '🗓️', 'Agenda'], ['club', '👥', 'Mi club'], ['league', '🏆', 'Liga'], ['agent', '🤝', 'Agente'], ['fame', '💎', 'Fama y tienda'], ['career', '📖', 'Carrera'], ['inbox', '✉️', 'Buzón']];
+const NAV_M = [['home', '🏠', 'Inicio'], ['squad', '👥', 'Plantilla'], ['tactics', '📋', 'Táctica'], ['market', '💸', 'Fichajes'], ['scout', '🔭', 'Ojeadores'], ['youth', '🌱', 'Cantera'], ['finance', '🏟️', 'Club'], ['league', '🏆', 'Liga'], ['goals', '🎯', 'Retos'], ['inbox', '✉️', 'Buzón']];
+const NAV_P = [['home', '🏠', 'Inicio'], ['myplayer', '⭐', 'Mi jugador'], ['agenda', '🗓️', 'Agenda'], ['club', '👥', 'Mi club'], ['league', '🏆', 'Liga'], ['agent', '🤝', 'Agente'], ['fame', '💎', 'Fama y tienda'], ['career', '📖', 'Carrera'], ['goals', '🎯', 'Retos'], ['inbox', '✉️', 'Buzón']];
 
 function shell(inner) {
   const nav = G.mode === 'manager' ? NAV_M : NAV_P;

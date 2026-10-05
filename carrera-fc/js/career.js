@@ -184,7 +184,7 @@ function acceptOffer(o) {
   const fromT = meTeam(), to = teamOf(o.tid);
   transferPlayer(p, to.id, o.fee, o.years, o.wage);
   o.done = 'accepted'; c.offers.forEach(x => { if (!x.done) x.done = 'expired'; });
-  c.freeAgent = false; c.wantsOut = false; c.coach = 55; c.mates = 55; p.morale = 85;
+  c.freeAgent = false; c.wantsOut = false; c.coach = 55; c.mates = 55; p.morale = 85; c.moved = true;
   news(`${p.name} (${p.ovr}) ficha por ${to.name} procedente de ${fromT.name}${o.fee ? ' por ' + fmtM(o.fee) : ''}.`, 'transfer');
   autoPick(to);
 }
@@ -247,7 +247,7 @@ function genContractOffers() {
 function signFreeAgentOffer(o) {
   const c = G.career, p = mePlayer();
   if (o.renew) { p.wage = o.wage; p.contract = o.years; }
-  else { transferPlayer(p, o.tid, 0, o.years, o.wage); c.coach = 55; c.mates = 55; news(`${p.name} ficha libre por ${teamOf(o.tid).name}.`, 'transfer'); }
+  else { c.moved = true; transferPlayer(p, o.tid, 0, o.years, o.wage); c.coach = 55; c.mates = 55; news(`${p.name} ficha libre por ${teamOf(o.tid).name}.`, 'transfer'); }
   c.freeAgent = false; c.offers = []; p.morale = 85;
 }
 function retireCareer() { G.career.retired = true; }

@@ -8,7 +8,7 @@ function newWorld(mode) {
   G = {
     v: 1, mode, season: 2026, week: 0, cal: [], fix: { 1: [], 2: [], 3: [] }, table: { 1: [], 2: [], 3: [] }, cup: null, teams: CLUBS.map(makeTeam), pl: {}, utid: 0,
     news: [], inbox: [], results: [], hist: [], board: { conf: 60, target: 6, txt: '' }, fans: 60, mgr: { name: 'Mister' }, career: null, pbias: {},
-    phase: 'play', fin: { last: null, season: { inc: 0, exp: 0 }, hist: [] }, offerId: 1, sacked: false
+    phase: 'play', fin: { last: null, season: { inc: 0, exp: 0 }, hist: [] }, offerId: 1, sacked: false, challenges: [], ach: {}, toasts: [], flags: {}
   };
   G.teams.forEach(t => {
     genSquad(t);
@@ -74,6 +74,7 @@ function startSeasonSchedule() {
   G.cup = { pairs: pairUp(cupTeams), round: 0, alive: cupTeams, rounds: [[], [], [], []], winner: null };
   G.window = true;
   setupBoard();
+  G.challenges = genChallenges();
 }
 const pairUp = ids => { const p = []; for (let i = 0; i < ids.length; i += 2) p.push([ids[i], ids[i + 1]]); return p; };
 const evName = e => e.t === 'L' ? `Jornada ${e.r + 1}` : e.t === 'C' ? `Copa · ${CUP_NAMES[e.r]}` : 'Parón internacional';
@@ -154,6 +155,7 @@ function runEvent(userRes) {
     else { G.cup.winner = G.cup.alive[0]; teamOf(G.cup.winner).titles++; news(`${teamOf(G.cup.winner).name} gana la Copa.`, 'cup'); }
   }
   endWeek(e, uf, userRes);
+  afterUserMatchGoals(userRes, uf);
   return uf;
 }
 
@@ -313,7 +315,7 @@ function negotiate(p, buyer, fee, wage, years) {
 function signPlayer(p, buyer, fee, wage, years) {
   const from = p.tid != null ? teamOf(p.tid) : null;
   transferPlayer(p, buyer.id, fee, years, wage);
-  if (G.mode === 'manager' && buyer.id === G.utid) G.board.conf = R.clamp(G.board.conf + (fee > 20 ? 1.5 : .3), 0, 100);
+  if (G.mode === 'manager' && buyer.id === G.utid) { G.board.conf = R.clamp(G.board.conf + (fee > 20 ? 1.5 : .3), 0, 100); if (fee >= 10) (G.flags = G.flags || {}).bigSign = true; }
   if (fee >= 5 || p.ovr >= 80) news(`${p.name} (${p.ovr}) ficha por ${buyer.name}${from ? ' desde ' + from.name : ' como agente libre'}${fee ? ' por ' + fmtM(fee) : ''}.`, 'transfer');
   p.morale = 80;
 }
@@ -415,7 +417,7 @@ function genYouth(t, n) {
 function promoteYouth(p) {
   const t = teamOf(p.tid);
   if (squadOf(t).length >= 32) return false;
-  t.youth = t.youth.filter(i => i !== p.id); t.squad.push(p.id); p.youth = false; p.wage = Math.max(.8, wageFor(p) * .8); p.contract = 4; p.num = 0; assignNumbers(t);
+  t.youth = t.youth.filter(i => i !== p.id); t.squad.push(p.id); p.youth = false; p.fromYouth = true; p.wage = Math.max(.8, wageFor(p) * .8); p.contract = 4; p.num = 0; assignNumbers(t);
   return true;
 }
 function shownPot(p) {
@@ -481,6 +483,7 @@ function finishSeason() {
     if (p.hist.length > 20) p.hist.shift();
   }
   G.hist.push({ s: G.season, champ: sum.champion, cup: sum.cup, pos: sum.pos, div: sum.div, team: G.utid, ballon: sum.ballon[0] ? sum.ballon[0].p.name : '' });
+  afterSeasonGoals(sum);
   // desarrollo
   developAll(.5, true);
   for (const p of Object.values(G.pl)) p.age++;

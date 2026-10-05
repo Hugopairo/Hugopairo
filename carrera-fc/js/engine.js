@@ -447,6 +447,7 @@ class Match {
     const A = this.sides[si], B = this.sides[1 - si];
     const pr = taker || A.on.slice().sort((a, b) => b.p.attrs.sho - a.p.attrs.sho)[0];
     this.emit('pen', si, `¡PENALTI para ${A.team.name}! ${pr.p.name} se encarga de lanzarlo.`);
+    if (!taker && this.moments && !this.auto && this.userPid && pr.p.id === this.userPid) { this.pending = { t: 'pen', si, pr }; return; }
     pr.sh++; A.st.sh++;
     const p = R.clamp(.74 + (pr.p.attrs.sho - 70) / 200 - (this.gkEff(B) - 70) / 300 + ((mod && mod.pa) || 0), .45, .93);
     if (R.chance(p)) { pr.sot++; A.st.sot++; this.goal(si, pr, null, 'pen'); }
@@ -455,10 +456,19 @@ class Match {
   /* --- momentos interactivos del jugador --- */
   momentChoices() {
     const pd = this.pending; if (!pd) return null;
-    if (pd.t === 'shoot') return { title: '¡Ocasión de gol!', text: 'Tienes el balón en la frontal del área.', opts: [['power', 'Disparo potente', 'Más riesgo, más recompensa'], ['place', 'Disparo colocado', 'Más puntería, menos fuerza'], ['dribble', 'Regatear al portero', 'Depende de tu regate'], ['pass', 'Ceder a un compañero', 'Mejor posicionado']] };
-    if (pd.t === 'create') return { title: '¡Tienes el balón en ataque!', text: 'Un compañero se desmarca. ¿Qué haces?', opts: [['through', 'Pase filtrado', 'Letal si sale bien'], ['safe', 'Pase seguro', 'Mantener la posesión'], ['cross', 'Centro al área', 'Remate de cabeza'], ['shootme', 'Probar el disparo', 'Lo hago yo']] };
+    if (pd.t === 'shoot') {
+      const k = pd.ctx.kind;
+      if (k === 'corner') return { title: '¡Córner a favor! Te llega el balón', text: 'Estás solo en el área pequeña.', opts: [['power', 'Remate de cabeza potente', 'Más riesgo, más recompensa'], ['place', 'Cabeceo colocado', 'Más puntería'], ['pass', 'Prolongar a un compañero', 'Mejor posicionado']] };
+      if (k === 'fk') return { title: '¡Falta peligrosa!', text: 'Te toca lanzarla, a unos 25 metros.', opts: [['power', 'Por encima de la barrera', 'Con mucha fuerza'], ['place', 'Raso a un palo', 'Más precisión'], ['pass', 'Pase corto', 'Jugada ensayada']] };
+      return { title: '¡Ocasión de gol!', text: 'Tienes el balón en la frontal del área.', opts: [['power', 'Disparo potente', 'Más riesgo, más recompensa'], ['place', 'Disparo colocado', 'Más puntería, menos fuerza'], ['dribble', 'Regatear al portero', 'Depende de tu regate'], ['pass', 'Ceder a un compañero', 'Mejor posicionado']] };
+    }
+    if (pd.t === 'create') {
+      if (pd.ctx.kind === 'corner') return { title: '¡Sacas el córner!', text: 'Los delanteros y centrales rematan al área.', opts: [['through', 'Centro tenso al primer palo', 'Letal si sale bien'], ['safe', 'Córner corto', 'Mantener la posesión'], ['cross', 'Centro bombeado al área', 'Remate de cabeza']] };
+      return { title: '¡Tienes el balón en ataque!', text: 'Un compañero se desmarca. ¿Qué haces?', opts: [['through', 'Pase filtrado', 'Letal si sale bien'], ['safe', 'Pase seguro', 'Mantener la posesión'], ['cross', 'Centro al área', 'Remate de cabeza'], ['shootme', 'Probar el disparo', 'Lo hago yo']] };
+    }
     if (pd.t === 'defend') {
       if (pd.pr.pos === 'POR') return { title: '¡Disparo a puerta!', text: 'El delantero rival se planta ante ti.', opts: [['dive', 'Estirada', 'Mejora la parada si aciertas'], ['rush', 'Salir a por el balón', 'Arriesgado'], ['hold', 'Quedarte en la línea', 'Seguro, pero menos efectivo']] };
+      if (pd.ctx.kind === 'corner') return { title: '¡Córner en contra!', text: 'Toca defender el balón parado.', opts: [['mark', 'Marcar al hombre', 'Duelo directo'], ['zone', 'Defensa en zona', 'Más seguro'], ['jump', 'Salir a cabecear', 'Puede despejar o fallar']] };
       return { title: '¡Peligro! El rival entra en tu zona', text: 'Decide cómo detener el ataque.', opts: [['tackle', 'Entrada firme', 'Puede ser falta'], ['intercept', 'Cortar el pase', 'Anticipación'], ['cover', 'Cerrar espacios', 'Opción segura']] };
     }
     if (pd.t === 'inj') return { title: 'Lesión en tu equipo', text: 'Elige a quién introducir.', opts: [] };
@@ -469,6 +479,18 @@ class Match {
     const pd = this.pending; if (!pd) return '';
     this.tick = []; this.pending = null;
     const ctx = pd.ctx, m = ctx && ctx.mod, sh = ctx && ctx.shooter, a = ctx && ctx.assister;
+    if (pd.t === 'pen') {
+      const pr = pd.pr, A = this.sides[pd.si], B = this.sides[1 - pd.si], sho = pr.p.attrs.sho;
+      const gkSide = R.wpick(['left', 'center', 'right'], x => x === 'center' ? .2 : .4);
+      let p = key === 'center' ? (gkSide === 'center' ? .25 : .93) : ((key === gkSide ? .42 : .96) * .95);
+      p = R.clamp(p + (sho - 70) / 400, .1, .97);
+      let msg;
+      if (R.chance(p)) { pr.sot++; A.st.sot++; pr.keyOK++; this.goal(pd.si, pr, null, 'pen'); msg = '¡GOOOL! Engañas al portero.'; }
+      else { const gk = B.on.find(x => x.pos === 'POR'); pr.r -= .5; pr.keyBad++; if (key === gkSide || (key === 'center' && gkSide === 'center')) { if (gk) { gk.sv++; gk.r += .6; } this.emit('save', pd.si, `¡PENALTI PARADO${gk ? ' por ' + gk.p.name : ''}!`); msg = 'El portero adivina tu lado y lo para.'; } else { this.emit('shot', pd.si, `${pr.p.name} lo manda fuera. ¡Fallo clamoroso!`); msg = 'Se te va fuera…'; } }
+      this.emit('moment', this.mySide, msg);
+      if (!this.pending) { this.aiSubs(); this.afterTick(); }
+      return msg;
+    }
     
     let msg = '';
     const ok = (p) => R.chance(R.clamp(p, .08, .95));
@@ -498,7 +520,10 @@ class Match {
         else if (key === 'rush') { if (ok(.25 + at.pac / 250 + at.def / 250)) { m.cancel = true; msg = '¡Sales y cortas el peligro!'; me.keyOK++; me.r += .3; this.emit('save', ctx.si, `${me.p.name} sale como una exhalación y despeja el peligro.`); } else { m.gm = 2.2; m.force = true; msg = '¡Llegas tarde! Portería vacía…'; me.keyBad++; me.r -= .35; } }
         else { m.gm = .9; msg = 'Te mantienes firme bajo palos.'; }
       } else {
-        if (key === 'tackle') {
+        if (key === 'mark') { if (ok(.35 + at.def / 200 + at.phy / 300)) { m.gm = .6; msg = '¡Ganas el duelo al delantero!'; me.keyOK++; me.r += .25; } else { m.gm = 1.2; msg = 'Te gana la posición.'; me.keyBad++; me.r -= .2; } }
+        else if (key === 'zone') { m.blk = .1; m.gm = .9; msg = 'La zona resiste el centro.'; me.r += .05; }
+        else if (key === 'jump') { if (ok(.3 + at.phy / 200 + at.def / 300)) { m.cancel = true; msg = '¡Despejas de cabeza!'; me.keyOK++; me.r += .35; this.emit('txt', 1 - ctx.si, `${me.p.name} sube más alto que nadie y despeja el córner.`); } else { m.gm = 1.5; msg = 'Fallas el salto y el balón queda suelto.'; me.keyBad++; me.r -= .3; } }
+        else if (key === 'tackle') {
           if (ok(.25 + at.def / 150)) { m.cancel = true; msg = '¡Entrada limpia! Cortas el ataque.'; me.keyOK++; me.r += .4; this.emit('txt', 1 - ctx.si, `¡Gran entrada de ${me.p.name}! Corta el avance.`); }
           else if (R.chance(.45)) { msg = '¡Falta! Te pitan la infracción.'; me.keyBad++; me.r -= .2; this.sides[this.mySide].st.fouls++; if (R.chance(.45)) { me.yc++; this.sides[this.mySide].st.yc++; this.emit('yc', this.mySide, `Tarjeta amarilla para ${me.p.name}.`, { pid: me.p.id }); if (me.yc >= 2) this.sendOff(this.mySide, me, false); } if (R.chance(.18)) { msg += ' ¡Y es penalti!'; this.penalty(ctx.si); this.recalc(0); this.recalc(1); m.cancel = true; } }
           else { m.gm = 1.5; m.ot = .08; msg = 'Te superan en el uno contra uno.'; me.keyBad++; me.r -= .3; }

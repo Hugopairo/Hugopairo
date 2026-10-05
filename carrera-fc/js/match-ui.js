@@ -39,7 +39,7 @@ function completeMatch(res, S, snap) {
     if (row) { c.caps++; c.ncGoals += row.g; c.fame = Math.min(100, c.fame + 1.5 + row.g * 2 + (row.r - 6.5)); c.log.unshift({ s: G.season, w: G.week, h: res.home.short, a: res.away.short, hg: res.hg, ag: res.ag, r: row.r, g: row.g, a2: row.a, min: row.min, intl: true, mine: true }); }
     UI.last = { res, week: G.week, intl: true, dnp: '' };
     cleanupTemp(); UI.intl = null;
-    runEvent(null); autosave();
+    runEvent(null); checkAch({}); autosave();
     return go('postmatch');
   }
   const uf = S.uf, row = G.mode === 'player' ? res.rows.find(r => r.p.id === G.career.pid) : null;

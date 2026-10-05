@@ -15,6 +15,7 @@ Todo es ficticio: clubes, ligas y jugadores se generan proceduralmente.
 - Agente: renovaciones, petición de traspaso, ofertas de otros clubes, cesiones y agencia libre al acabar contrato.
 - Fama, patrocinios, tienda (casas, coches) y equipo personal (fisio, nutricionista, entrenador, psicólogo).
 - Convocatorias con la **selección** (partidos internacionales).
+- Más decisiones en directo: córners (rematar, sacar o defender), faltas directas y **penaltis que lanzas tú**.
 - Fin de temporada con **Balón de Oro**, Pichichi, títulos, palmarés, historial y Hall of Fame al retirarte.
 
 ### 📋 Modo Manager
@@ -26,6 +27,10 @@ Todo es ficticio: clubes, ligas y jugadores se generan proceduralmente.
 - **Finanzas**: ingresos (TV, patrocinio, merchandising, entradas), salarios, precio de entradas y mejora de 5 instalaciones.
 - Directiva con objetivos y confianza (¡te pueden despedir!), rueda de prensa, moral, lesiones, sanciones, contratos.
 - Progresión realista: los jóvenes crecen hacia su potencial, los veteranos decaen.
+
+## Retos y logros
+- 3 **retos de temporada** (goles, nota media, porterías a cero, victorias, Copa…) con recompensas de dinero, fama o presupuesto.
+- 19 **logros** permanentes (primer gol, hat-trick, nivel 90, ascenso, Balón de Oro, fichaje estrella…). Pantalla **🎯 Retos**.
 
 ## Club personalizado: EFB Jesús de la Ossa
 La **EFB Jesús de la Ossa** (Tarancón, Primera Autonómica) está en el juego con los nombres de su plantilla.
@@ -46,6 +51,7 @@ js/data.js       datos base, nombres, clubes, formaciones
 js/engine.js     jugadores, alineaciones, motor de partido
 js/world.js      calendario, liga, copa, fichajes, finanzas, progresión
 js/career.js     modo jugador (agente, ofertas, selección, tienda)
+js/goals.js      retos de temporada y logros
 js/ui.js         componentes, menús, previa/post-partido, liga, buzón
 js/match-ui.js   partido en directo, fin de temporada
 js/manager.js    pantallas del manager
